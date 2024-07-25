@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "97282975813",
+    "project_id": "cameronharvest-dailyprice",
+    "storage_bucket": "cameronharvest-dailyprice.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:97282975813:android:f773fcc11aa660e0eb5b2c",
+        "android_client_info": {
+          "package_name": "com.greenlandpillar.price"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCzOpkUNcgBQa8ggqhbBJLPyYP05iyiX_w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
