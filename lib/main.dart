@@ -1,16 +1,15 @@
-import 'dart:io';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/services.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/adapters.dart';
+import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:price/useractions/login.dart';
+import 'dailyprice.dart';
 import 'firebase/firebase_auth.dart';
 import 'firebase_options.dart';
 import 'home.dart';
@@ -99,13 +98,13 @@ class _MyHomePageState extends State<MyHomePage> {
     if(user != null){
       if(user.emailVerified){
         if(firebaseData=='users'){
-          return const MaterialApp(
+          return MaterialApp(
               home: HomePage());
         }
-        // else if(firebaseData=='admin'){
-        //   return const MaterialApp(
-        //       home: ManagerhomeScreen());
-        // }
+        else if(firebaseData=='admin'){
+          return const MaterialApp(
+              home: dailyPrice());
+        }
       }
       else{
         return const MaterialApp(
@@ -126,124 +125,118 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 }
 
-class SplashScreen extends StatelessWidget {
-  SplashScreen({super.key});
+class SplashScreen extends StatefulWidget {
+  @override
+  _SplashScreenState createState() => _SplashScreenState();
+}
 
-  final TextEditingController ctrl = TextEditingController();
+class _SplashScreenState extends State<SplashScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Delay of 2 seconds before navigating to the next page
+    Future.delayed(Duration(seconds: 3), () {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => LoginScreen()), // Replace with your next page widget
+      );
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
+    // Get the screen size dynamically
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
 
-    final double screenHeight = MediaQuery.of(context).size.height;
-    final double screenWidth = MediaQuery.of(context).size.width;
+    // Use the minimum of screen width and height for sizing to avoid overflow
+    final safeDimension = screenWidth < screenHeight ? screenWidth : screenHeight;
 
-    double multiplier = 0;
+    final currentDate = DateTime.now();
+    final formattedDay = DateFormat('EEEE').format(currentDate); // Get the day name
+    final formattedDate = DateFormat('d MMMM y').format(currentDate); // Get date in "11 August 2022" format
 
-    if (kIsWeb) {
-      multiplier = 0.3;
-    }else{
-      multiplier=1;
-    }
-
-    return WillPopScope(
-        onWillPop: () async {
-          final shouldPop = await showDialog<bool>(
-            context: context,
-            builder: (context) {
-              return AlertDialog(
-                title: const Text('Do you want to close the app?'),
-                actionsAlignment: MainAxisAlignment.spaceBetween,
-                actions: [
-                  TextButton(
-                    onPressed: () {
-                      Navigator.pop(context, true); // Return 'true' to close the app.
-                    },
-                    child: const Text('Yes'),
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      Navigator.pop(context, false); // Return 'false' to stay on the same page.
-                    },
-                    child: const Text('No'),
-                  ),
-                ],
-              );
-            },
-          );
-
-          if (shouldPop ?? false) {
-            // Close the app
-            if (Platform.isAndroid) {
-              // For Android, exit the app
-              SystemChannels.platform.invokeMethod('SystemNavigator.pop');
-            } else if (Platform.isIOS) {
-              // For iOS, exit the app
-              exit(0);
-            }
-          }
-
-          return false; // Always return 'false' to stay on the same page.
-        },
-        child: Scaffold(
-          body: Container(
-            width: MediaQuery.of(context).size.width,
-            height: MediaQuery.of(context).size.height,
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [Color(0xff000000), Color(0xff000000)],
-              ),
+    return Scaffold(
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: Image.asset(
+              'assets/leaves.jpg', // Add your image path here
+              fit: BoxFit.cover,
             ),
+          ),
+          // Overlaying semi-transparent white background
+          Positioned.fill(
+            child: Container(
+              color: Colors.white.withOpacity(0.3),
+            ),
+          ),
+          // Content in the center of the screen
+          Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Spacer(flex: 2),
-                Image.asset(
-                  'assets/images/Mockup 3D.png',
-                  height: screenHeight*0.5,
+                // Top green text
+                Text(
+                  'VEGETABLE PRICE',
+                  style: TextStyle(
+                    fontSize: safeDimension * 0.12, // Use safe dimension for font size
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-                const Spacer(flex: 3),
-                Padding(
-                  padding: EdgeInsets.only(bottom: screenHeight * 0.04),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      TextButton(
-                        onPressed: () {
-                          Navigator.of(context).pushReplacement(
-                            MaterialPageRoute(
-                              builder: (context) => LoginScreen(),
-                            ),
-                          );// Navigate to LoginScreen using the route
-                        },
-                        style: TextButton.styleFrom(
-                          foregroundColor: const Color(0xff000000),
-                          backgroundColor: const Color(0xffffffff),
-                          padding: EdgeInsets.symmetric(
-                            horizontal: screenWidth * 0.1,
-                            vertical: screenHeight * 0.025,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        child: Text(
-                          'Login',
-                          style: TextStyle(
-                            color: Colors.black,
-                            fontSize: screenHeight * 0.025,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ],
+                SizedBox(height: safeDimension * 0.02), // Dynamic spacing
+                // Subtitle text
+                Text(
+                  'by Cameron Harvest',
+                  style: TextStyle(
+                    fontSize: safeDimension * 0.05, // Use safe dimension for font size
+                    color: Colors.white70,
+                  ),
+                ),
+                SizedBox(height: safeDimension * 0.03), // Dynamic spacing
+                // Rounded image or circle with leaves inside, wrapped with a circular outline
+                Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: Colors.white, // Outline color
+                      width: 10.0, // Thickness of the outline
+                    ),
+                  ),
+                  child: ClipOval(
+                    child: Image.asset(
+                      'assets/leaves.jpg', // Add your image path here
+                      height: safeDimension * 0.5, // Dynamic height and width based on safe dimension
+                      width: safeDimension * 0.5,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+                SizedBox(height: safeDimension * 0.03), // Dynamic spacing
+                // Bottom text with current date and day
+                Text(
+                  formattedDay, // Display current day
+                  style: TextStyle(
+                    fontSize: safeDimension * 0.08, // Use safe dimension for font size
+                    color: Colors.white,
+                    fontFamily: 'Cursive',
+                  ),
+                ),
+                SizedBox(height: safeDimension * 0.01), // Dynamic spacing
+                Text(
+                  formattedDate, // Display formatted date
+                  style: TextStyle(
+                    fontSize: safeDimension * 0.045, // Use safe dimension for font size
+                    color: Colors.white,
                   ),
                 ),
               ],
             ),
           ),
-        ));
+        ],
+      ),
+    );
   }
 }
 

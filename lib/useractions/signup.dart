@@ -1,5 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -48,14 +47,12 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
   final _emailTextController = TextEditingController();
   final _passwordTextController = TextEditingController();
   final _confirmpasswordTextController = TextEditingController();
-  final _otpTextController = TextEditingController();
   final _authService = AuthenticationService();
 
   final _focusName = FocusNode();
   final _focusEmail = FocusNode();
   final _focusPassword = FocusNode();
   final _focusconfirmPassword = FocusNode();
-  final _focusotpPassword = FocusNode();
 
   bool _isProcessing = false;
 
@@ -70,14 +67,13 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
         _focusEmail.unfocus();
         _focusPassword.unfocus();
         _focusconfirmPassword.unfocus();
-        _focusotpPassword.unfocus();
       },
       child: Scaffold(
         appBar: AppBar(
-          backgroundColor: Colors.white,
+          backgroundColor: Color(0xff4F694C),
           elevation: 0,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios, color: Color(0xff000000)),
+            icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
             onPressed: () {
               Navigator.pushAndRemoveUntil(
                 context,
@@ -90,8 +86,9 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
           ),
           centerTitle: true,
         ),
-        backgroundColor: Colors.white,
+        backgroundColor: Color(0xff4F694C),
         resizeToAvoidBottomInset: false,
+
         body: SingleChildScrollView(
           child: ConstrainedBox(
             constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height),
@@ -109,6 +106,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                           "Signup,",
                           style: TextStyle(
                             fontSize: 30,
+                            color: Colors.white,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -116,9 +114,10 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                       Padding(
                         padding: EdgeInsets.fromLTRB(0, screenHeight * 0.005, 0, screenHeight * 0.08),
                         child: const Text(
-                          "Cameron Harvest!",
+                          "VEGETABLE PRICE!",
                           style: TextStyle(
                             fontSize: 30,
+                            color: Colors.white,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -135,9 +134,11 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                               ),
                               decoration: const InputDecoration(
                                 border: OutlineInputBorder(),
-                                labelText: "Store name",
+                                labelText: "Name",
+                                labelStyle: TextStyle(color: Colors.white),
                                 floatingLabelBehavior: FloatingLabelBehavior.auto,
                               ),
+                              style: const TextStyle(color: Colors.white), // Input text color
                             ),
                             const SizedBox(height: 12.0),
                             TextFormField(
@@ -150,8 +151,10 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                               decoration: const InputDecoration(
                                 border: OutlineInputBorder(),
                                 labelText: "Email",
+                                labelStyle: TextStyle(color: Colors.white),
                                 floatingLabelBehavior: FloatingLabelBehavior.auto,
                               ),
+                              style: const TextStyle(color: Colors.white), // Input text color
                             ),
                             const SizedBox(height: 12.0),
                             TextFormField(
@@ -166,9 +169,11 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                                 border: const OutlineInputBorder(),
                                 suffixIcon: togglePassword(),
                                 labelText: "Password",
+                                labelStyle: TextStyle(color: Colors.white),
                                 floatingLabelBehavior: FloatingLabelBehavior.auto,
 
                               ),
+                              style: const TextStyle(color: Colors.white), // Input text color
                             ),
                             const SizedBox(height: 12.0),
                             TextFormField(
@@ -190,8 +195,10 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                                 border: const OutlineInputBorder(),
                                 suffixIcon: togglePassword(),
                                 labelText: "Confirm Password",
+                                labelStyle: TextStyle(color: Colors.white),
                                 floatingLabelBehavior: FloatingLabelBehavior.auto,
                               ),
+                              style: const TextStyle(color: Colors.white), // Input text color
                             ),
 
                             const SizedBox(height: 32.0),
@@ -219,7 +226,6 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                                           _isProcessing = false;
                                         });
                                         if (_status == AuthStatus.successful) {
-                                          final fcmToken = await FirebaseMessaging.instance.getToken();
                                           Map<String, dynamic> data = {
                                             'email': _emailTextController.text,
                                             'name': _nameTextController.text,
@@ -249,7 +255,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                                       }
                                     },
                                     style: ButtonStyle(
-                                      backgroundColor: MaterialStateProperty.all(const Color(0xff000000)),
+                                      backgroundColor: MaterialStateProperty.all(const Color(0xff384E37)),
                                     ),
                                     child: const Text(
                                       'Sign up',
@@ -278,7 +284,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                                       borderRadius: BorderRadius.circular(8.0),
                                     ),
                                     side: const BorderSide(
-                                      color: Color(0xff000000),
+                                      color: Color(0xff384E37),
                                       width: 2.0,
                                     ),
                                     minimumSize: Size(screenWidth * 0.9, screenHeight * 0.06), // Adjust the width and height proportions as desired
@@ -286,7 +292,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                                   child: const Text(
                                     "Already have an account? Log In",
                                     style: TextStyle(
-                                      color: Color(0xff000000),
+                                      color: Colors.white,
                                     ),
                                   ),
                                 ),
@@ -307,7 +313,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
       setState(() {
         _isSecuredPassword = !_isSecuredPassword;
       });
-    }, icon : _isSecuredPassword? const Icon(Icons.visibility) : const Icon(Icons.visibility_off));
+    }, icon : _isSecuredPassword? const Icon(Icons.visibility,color: Colors.white,) : const Icon(Icons.visibility_off,color: Colors.white,));
   }
 
 }

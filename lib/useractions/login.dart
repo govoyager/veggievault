@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:price/dailyprice.dart';
 import '../../main.dart';
 import 'signup.dart';
 import '../firebase/firebase_auth.dart';
@@ -123,10 +124,10 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
         },
         child: Scaffold(
           appBar: AppBar(
-            backgroundColor: Colors.white,
+            backgroundColor: Color(0xff4F694C),
             elevation: 0,
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back_ios, color: Color(0xff000000)),
+              icon: const Icon(Icons.arrow_back_ios, color: Color(0xffFCFCFC)),
               onPressed: () async {
                 await _authService.logout();
                 Navigator.of(context)
@@ -141,7 +142,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
             centerTitle: true,
           ),
           resizeToAvoidBottomInset: false,
-          backgroundColor: Colors.white,
+          backgroundColor: Color(0xff4F694C),
           body: FutureBuilder(
             future: _initializeFirebase(),
             builder: (context, snapshot) {
@@ -168,7 +169,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                             child: Text(
                               'Welcome Back!',
                               style: TextStyle(
-                                color: Color(0xff000000),
+                                color: Color(0xffFCFCFC),
                                 fontSize: 30,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -182,15 +183,16 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                                   keyboardType: TextInputType.emailAddress,
                                   controller: _emailTextController,
                                   focusNode: _focusEmail,
-                                  validator: (value) =>
-                                      Validator.validateEmail(
-                                        email: value,
-                                      ),
+                                  validator: (value) => Validator.validateEmail(
+                                    email: value,
+                                  ),
                                   decoration: const InputDecoration(
                                     border: OutlineInputBorder(),
                                     labelText: "Email",
+                                    labelStyle: TextStyle(color: Colors.white),
                                     floatingLabelBehavior: FloatingLabelBehavior.auto,
                                   ),
+                                  style: TextStyle(color: Colors.white), // Input text color
                                 ),
                                 SizedBox(height: screenHeight * 0.0156),
                                 TextFormField(
@@ -198,16 +200,19 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                                   controller: _passwordTextController,
                                   focusNode: _focusPassword,
                                   obscureText: _isSecuredConfirmPassword,
-                                  validator: (value) =>
-                                      Validator.validatePassword(
-                                        password: value,
-                                      ),
+                                  validator: (value) => Validator.validatePassword(
+                                    password: value,
+                                  ),
                                   decoration: InputDecoration(
-                                    border: const OutlineInputBorder(),
+                                    border: const OutlineInputBorder(
+                                      borderSide: BorderSide(color: Colors.white),
+                                    ),
                                     labelText: "Password",
+                                    labelStyle: TextStyle(color: Colors.white),
                                     suffixIcon: toggleConfirmPassword(),
                                     floatingLabelBehavior: FloatingLabelBehavior.auto,
                                   ),
+                                  style: const TextStyle(color: Colors.white), // Input text color
                                 ),
                                 Padding(
                                   padding: EdgeInsets.fromLTRB(
@@ -235,7 +240,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                                         child: const Text(
                                           'Forgot password?',
                                           style: TextStyle(
-                                            color: Color(0xff000000),
+                                            color: Color(0xffFCFCFC),
                                           ),
                                         ),
                                       ),
@@ -279,11 +284,11 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                                                     ),
                                                   );
                                                 } else if (usertype == 'admin') {
-                                                  // Navigator.of(context).pushReplacement(
-                                                  //   MaterialPageRoute(
-                                                  //     builder: (context) => ManagerhomeScreen(),
-                                                  //   ),
-                                                  // );
+                                                  Navigator.of(context).pushReplacement(
+                                                    MaterialPageRoute(
+                                                      builder: (context) => dailyPrice(),
+                                                    ),
+                                                  );
                                                 }
                                                 // Save login details
                                                 await _storage.write(key: 'email', value: _emailTextController.text.trim());
@@ -324,7 +329,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                                           }
                                         },
                                         style: ButtonStyle(
-                                          backgroundColor: MaterialStateProperty.all(const Color(0xff000000)),
+                                          backgroundColor: MaterialStateProperty.all(const Color(0xff384E37)),
                                         ),
                                         child: const Text(
                                           'Sign In',
@@ -355,7 +360,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                                     borderRadius: BorderRadius.circular(8.0),
                                   ),
                                   side: const BorderSide(
-                                    color: Color(0xff000000),
+                                    color: Color(0xff384E37),
                                     width: 2.0,
                                   ),
                                   minimumSize: Size(screenWidth * 0.9, screenHeight * 0.06), // Adjust the width and height proportions as desired
@@ -363,7 +368,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                                 child: const Text(
                                   "Don't have an account? SIGN UP",
                                   style: TextStyle(
-                                    color: Color(0xff000000),
+                                    color: Color(0xffFCFCFC),
                                   ),
                                 ),
                               ),
@@ -394,8 +399,8 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
         });
       },
       icon: _isSecuredConfirmPassword
-          ? const Icon(Icons.visibility)
-          : const Icon(Icons.visibility_off),
+          ? const Icon(Icons.visibility,color: Colors.white,)
+          : const Icon(Icons.visibility_off,color: Colors.white,),
     );
   }
 }

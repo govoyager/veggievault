@@ -1,8 +1,13 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:price/dailyprice.dart';
+
+import 'firebase/firebase_auth.dart';
+import 'main.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -219,7 +224,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-
+  final _authService = AuthenticationService();
 
   @override
   Widget build(BuildContext context) {
@@ -255,66 +260,56 @@ class _HomePageState extends State<HomePage> {
     },
     child:Scaffold(
       appBar: AppBar(
-        title: Text(
-          'Daily Price',
-          style: TextStyle(
-            color: Colors.white,
-          ),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Vegetable Price',
+              style: TextStyle(
+                color: Colors.white,
+              ),
+            ),
+            SizedBox(height: 8), // Add space between the title and date/time
+            Text(
+              DateFormat('dd-MM-yyyy: HH:mm:ss').format(DateTime.now()), // Custom date format
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.7), // Slightly faded white color for distinction
+                fontSize: 14, // Smaller font size for date and time
+              ),
+            ),
+          ],
         ),
-        backgroundColor: Colors.black,
-        centerTitle: true,
-        automaticallyImplyLeading: false,
+        backgroundColor: Color(0xff4F694C),
+        automaticallyImplyLeading: true,
         actions: [
-          IconButton(
-            icon: Icon(Icons.person, color: Colors.white),
-            onPressed: () async {
-              // Show a dialog to ask for password
-              bool? isPasswordCorrect = await showDialog<bool>(
-                context: context,
-                builder: (context) {
-                  TextEditingController passwordController = TextEditingController();
-                  return AlertDialog(
-                    title: Text('Enter Password'),
-                    content: TextField(
-                      controller: passwordController,
-                      obscureText: true,
-                      keyboardType: TextInputType.number,
-                      decoration: InputDecoration(hintText: 'Password'),
-                    ),
-                    actions: [
-                      TextButton(
-                        onPressed: () {
-                          Navigator.of(context).pop(false); // Cancel if user presses Cancel
-                        },
-                        child: Text('Cancel'),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          if (passwordController.text == '2555') {
-                            Navigator.of(context).pop(true); // Return true if password is correct
-                          } else {
-                            Navigator.of(context).pop(false); // Return false if password is incorrect
-                          }
-                        },
-                        child: Text('Submit'),
-                      ),
-                    ],
-                  );
-                },
+          InkWell(
+            onTap: () async {
+              await _authService.logout();
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(
+                  builder: (context) => SplashScreen(),
+                ),
+                ModalRoute.withName('/'),
               );
-
-              // Navigate to the next page only if the password is correct
-              if (isPasswordCorrect ?? false) {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (context) => dailyPrice()),
-                );
-              }
             },
-          )
-
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: const Color(0xffACC6AC)),
+                color: const Color(0xffffffff),
+              ),
+              child: const Icon(
+                Icons.logout,
+                color: Colors.black,
+              ),
+            ),
+          ),
+          SizedBox(width: 10,)
         ],
       ),
-      backgroundColor: Colors.black,
+      backgroundColor: Color(0xff4F694C),
       body: Column(
         children: [
           Padding(
@@ -324,9 +319,11 @@ class _HomePageState extends State<HomePage> {
               style: TextStyle(color: Colors.white),
               decoration: InputDecoration(
                 hintText: 'Search products...',
+                hintStyle: TextStyle(color: Colors.white),
                 prefixIcon: Icon(Icons.search,color: Colors.white,),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8.0),
+
                 ),
               ),
               onChanged: (value) {
@@ -372,221 +369,223 @@ class _HomePageState extends State<HomePage> {
             ],
           ),
           SizedBox(height: 5,),
-          Container(height: 1,color: Colors.black,),
-          SizedBox(height: 5,),
           Expanded(
             child: RefreshIndicator(
               onRefresh: _refreshProducts,
               child: Scrollbar(
-                child: ListView.separated(
-                  itemCount: filteredProducts.length,
-                  itemBuilder: (context, index) {
-                    final product = filteredProducts[index];
-                    final productName = product['name'];
+                child: Padding(
+                  padding: EdgeInsets.all(15),
+                  child: ListView.builder(
+                    itemCount: filteredProducts.length,
+                    itemBuilder: (context, index) {
+                      final product = filteredProducts[index];
+                      final productName = product['name'];
 
-                    Future<Map<String, dynamic>> fetchPrices() async {
-                      try {
-                        final today = DateTime.now();
-                        final formattedDate = '${today.year}${today.month.toString().padLeft(2, '0')}${today.day.toString().padLeft(2, '0')}'; // Format yyyymmdd
-                        final previousDate = today.subtract(Duration(days: 1));
-                        final formattedPreviousDate = '${previousDate.year}${previousDate.month.toString().padLeft(2, '0')}${previousDate.day.toString().padLeft(2, '0')}'; // Format yyyymmdd for previous day
+                      Future<Map<String, dynamic>> fetchPrices() async {
+                        try {
+                          final today = DateTime.now();
+                          final formattedDate = '${today.year}${today.month.toString().padLeft(2, '0')}${today.day.toString().padLeft(2, '0')}'; // Format yyyymmdd
+                          final previousDate = today.subtract(Duration(days: 1));
+                          final formattedPreviousDate = '${previousDate.year}${previousDate.month.toString().padLeft(2, '0')}${previousDate.day.toString().padLeft(2, '0')}'; // Format yyyymmdd for previous day
 
-                        final docSnapshot = await _firestore.collection('products').where('name', isEqualTo: productName).get();
-                        if (docSnapshot.docs.isNotEmpty) {
-                          final productId = docSnapshot.docs.first.id;
+                          final docSnapshot = await _firestore.collection('products').where('name', isEqualTo: productName).get();
+                          if (docSnapshot.docs.isNotEmpty) {
+                            final productId = docSnapshot.docs.first.id;
 
-                          final currentDayDoc = await _firestore.collection('products').doc(productId).collection('prices').doc(formattedDate).get();
-                          final previousDayDoc = await _firestore.collection('products').doc(productId).collection('prices').doc(formattedPreviousDate).get();
+                            final currentDayDoc = await _firestore.collection('products').doc(productId).collection('prices').doc(formattedDate).get();
+                            final previousDayDoc = await _firestore.collection('products').doc(productId).collection('prices').doc(formattedPreviousDate).get();
 
-                          final currentSunPriceStr = currentDayDoc.data()?['sunPrice']?.toString() ?? '0';
-                          final previousSunPriceStr = previousDayDoc.data()?['sunPrice']?.toString() ?? '0';
-                          final currentMoonPriceStr = currentDayDoc.data()?['moonPrice']?.toString() ?? '0';
-                          final previousMoonPriceStr = previousDayDoc.data()?['moonPrice']?.toString() ?? '0';
+                            final currentSunPriceStr = currentDayDoc.data()?['sunPrice']?.toString() ?? '0';
+                            final previousSunPriceStr = previousDayDoc.data()?['sunPrice']?.toString() ?? '0';
+                            final currentMoonPriceStr = currentDayDoc.data()?['moonPrice']?.toString() ?? '0';
+                            final previousMoonPriceStr = previousDayDoc.data()?['moonPrice']?.toString() ?? '0';
 
-                          final currentSunPrice = double.tryParse(currentSunPriceStr) ?? 0.0;
-                          final previousSunPrice = double.tryParse(previousSunPriceStr) ?? 0.0;
-                          final currentMoonPrice = double.tryParse(currentMoonPriceStr) ?? 0.0;
-                          final previousMoonPrice = double.tryParse(previousMoonPriceStr) ?? 0.0;
+                            final currentSunPrice = double.tryParse(currentSunPriceStr) ?? 0.0;
+                            final previousSunPrice = double.tryParse(previousSunPriceStr) ?? 0.0;
+                            final currentMoonPrice = double.tryParse(currentMoonPriceStr) ?? 0.0;
+                            final previousMoonPrice = double.tryParse(previousMoonPriceStr) ?? 0.0;
 
+                            return {
+                              'sunPrice': currentSunPriceStr,
+                              'moonPrice': currentMoonPriceStr,
+                              'currentDayHasPrice': currentDayDoc.exists,
+                              'previousSunPrice': previousSunPrice,
+                              'previousMoonPrice': previousMoonPrice,
+                            };
+                          } else {
+                            return {
+                              'sunPrice': 'Not set',
+                              'moonPrice': 'Not set',
+                              'currentDayHasPrice': false,
+                              'previousSunPrice': 0.0,
+                              'previousMoonPrice': 0.0,
+                            };
+                          }
+                        } catch (e) {
+                          print('Error fetching prices: $e'); // Log error for debugging
                           return {
-                            'sunPrice': currentSunPriceStr,
-                            'moonPrice': currentMoonPriceStr,
-                            'currentDayHasPrice': currentDayDoc.exists,
-                            'previousSunPrice': previousSunPrice,
-                            'previousMoonPrice': previousMoonPrice,
-                          };
-                        } else {
-                          return {
-                            'sunPrice': 'Not set',
-                            'moonPrice': 'Not set',
+                            'sunPrice': 'Error',
+                            'moonPrice': 'Error',
                             'currentDayHasPrice': false,
                             'previousSunPrice': 0.0,
                             'previousMoonPrice': 0.0,
                           };
                         }
-                      } catch (e) {
-                        print('Error fetching prices: $e'); // Log error for debugging
-                        return {
-                          'sunPrice': 'Error',
-                          'moonPrice': 'Error',
-                          'currentDayHasPrice': false,
-                          'previousSunPrice': 0.0,
-                          'previousMoonPrice': 0.0,
-                        };
                       }
-                    }
+                      final User? user = FirebaseAuth.instance.currentUser;
 
-                    return FutureBuilder<Map<String, dynamic>>(
-                      future: fetchPrices(),
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {
-                          if (snapshot.hasError) {
+                      // Ensure user is not null (i.e., the user is logged in)
+                      if (user == null) {
+                        return ListTile(
+                          title: Text('User not authenticated'),
+                        );
+                      }
+
+                      return FutureBuilder<Map<String, dynamic>>(
+                        future: fetchPrices(),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {
+                            if (snapshot.hasError) {
+                              return ListTile(
+                                leading: Icon(Icons.error),
+                                title: Text('Error fetching prices'),
+                              );
+                            }
+
+                            final sunPriceStr = snapshot.data!['sunPrice'];
+                            final moonPriceStr = snapshot.data!['moonPrice'];
+                            final currentDayHasPrice = snapshot.data!['currentDayHasPrice'] as bool;
+                            final previousSunPrice = snapshot.data!['previousSunPrice'] as double;
+                            final previousMoonPrice = snapshot.data!['previousMoonPrice'] as double;
+                            final currentSunPrice = double.tryParse(sunPriceStr) ?? 0.0;
+                            final currentMoonPrice = double.tryParse(moonPriceStr) ?? 0.0;
+
+                            final sunPriceColor = currentSunPrice >= previousSunPrice ? Colors.green : Colors.red;
+                            final moonPriceColor = currentMoonPrice >= previousMoonPrice ? Colors.green : Colors.red;
+
+                            final sunPercentageChange = previousSunPrice != 0.0
+                                ? ((currentSunPrice - previousSunPrice) / previousSunPrice) * 100
+                                : 0.0;
+                            final moonPercentageChange = previousMoonPrice != 0.0
+                                ? ((currentMoonPrice - previousMoonPrice) / previousMoonPrice) * 100
+                                : 0.0;
+
+                            return Container(
+                              color: Color(0xFF82957F),
+                              margin: EdgeInsets.only(bottom: 10), // Adds space after each card
+                              child: ListTile(
+                                title: Text(
+                                  productName,
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                                trailing: Container(
+                                  constraints: BoxConstraints(maxWidth: 170), // Adjust the max width as needed
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.max, // Ensure the Row takes the full width available
+                                    children: [
+                                      // Sun data with conditional highlighting
+                                      Expanded(
+                                        child: Container(
+                                          color: DateTime.now().hour >= 12
+                                              ? Colors.grey.withOpacity(0.3)
+                                              : Colors.transparent,
+                                          child: Center(
+                                            child: Column(
+                                              mainAxisAlignment: MainAxisAlignment.center,
+                                              children: [
+                                                Row(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: [
+                                                    Icon(
+                                                      Icons.wb_sunny_rounded,
+                                                      color: currentDayHasPrice ? sunPriceColor : Colors.yellow,
+                                                    ),
+                                                    Text(
+                                                      ' RM$sunPriceStr',
+                                                      style: TextStyle(
+                                                          color: currentDayHasPrice ? sunPriceColor : Colors.yellow,
+                                                          fontSize: 10
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                                SizedBox(height: 4),
+                                                Text(
+                                                  '${sunPercentageChange.toStringAsFixed(2)}%',
+                                                  style: TextStyle(
+                                                    fontSize: 8,
+                                                    color: currentDayHasPrice ? sunPriceColor : Colors.yellow,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      Container(color: Colors.white, width: 1,), // Adds some space between the rows
+                                      Expanded(
+                                        child: Container(
+                                          color: DateTime.now().hour < 12
+                                              ? Colors.grey.withOpacity(0.3)
+                                              : Colors.transparent,
+                                          child: Center(
+                                            child: Column(
+                                              mainAxisAlignment: MainAxisAlignment.center,
+                                              children: [
+                                                Row(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: [
+                                                    Icon(
+                                                      Icons.nightlight_round,
+                                                      color: currentDayHasPrice ? moonPriceColor : Colors.yellow,
+                                                    ),
+                                                    Text(
+                                                      ' RM$moonPriceStr',
+                                                      style: TextStyle(
+                                                          color: currentDayHasPrice ? moonPriceColor : Colors.yellow,
+                                                          fontSize: 10
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                                SizedBox(height: 4),
+                                                Text(
+                                                  '${moonPercentageChange.toStringAsFixed(2)}%',
+                                                  style: TextStyle(
+                                                    fontSize: 8,
+                                                    color: currentDayHasPrice ? moonPriceColor : Colors.yellow,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+                          } else if (snapshot.hasError) {
                             return ListTile(
                               leading: Icon(Icons.error),
                               title: Text('Error fetching prices'),
                             );
-                          }
-
-                          final sunPriceStr = snapshot.data!['sunPrice'];
-                          final moonPriceStr = snapshot.data!['moonPrice'];
-                          final currentDayHasPrice = snapshot.data!['currentDayHasPrice'] as bool;
-                          final previousSunPrice = snapshot.data!['previousSunPrice'] as double;
-                          final previousMoonPrice = snapshot.data!['previousMoonPrice'] as double;
-                          final currentSunPrice = double.tryParse(sunPriceStr) ?? 0.0;
-                          final currentMoonPrice = double.tryParse(moonPriceStr) ?? 0.0;
-
-                          final sunPriceColor = currentSunPrice >= previousSunPrice ? Colors.green : Colors.red;
-                          final moonPriceColor = currentMoonPrice >= previousMoonPrice ? Colors.green : Colors.red;
-
-                          final sunPercentageChange = previousSunPrice != 0.0
-                              ? ((currentSunPrice - previousSunPrice) / previousSunPrice) * 100
-                              : 0.0;
-                          final moonPercentageChange = previousMoonPrice != 0.0
-                              ? ((currentMoonPrice - previousMoonPrice) / previousMoonPrice) * 100
-                              : 0.0;
-
-                          return ListTile(
-                            leading: Image.asset(
-                              'assets/$productName.png',
-                              height: 40,
-                              width: 40,
-                            ),
-                            title: Text(
-                              productName,
-                              style: TextStyle(color: Colors.white),
-                            ),
-                            trailing: Container(
-                              constraints: BoxConstraints(maxWidth: 170), // Adjust the max width as needed
-                              child: Row(
-                                mainAxisSize: MainAxisSize.max, // Ensure the Row takes the full width available
-                                children: [
-                                  // Sun data with conditional highlighting
-                                  Expanded(
-                                    child: Container(
-                                      color: DateTime.now().hour >= 12
-                                          ? Colors.grey.withOpacity(0.3)
-                                          : Colors.transparent,
-                                      child: Center(
-                                        child: Column(
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          children: [
-                                            Row(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                Icon(
-                                                  Icons.wb_sunny_rounded,
-                                                  color: currentDayHasPrice ? sunPriceColor : Colors.yellow,
-                                                ),
-                                                Text(
-                                                  ' RM$sunPriceStr',
-                                                  style: TextStyle(
-                                                      color: currentDayHasPrice ? sunPriceColor : Colors.yellow,
-                                                      fontSize: 10
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                            SizedBox(height: 4),
-                                            Text(
-                                              '${sunPercentageChange.toStringAsFixed(2)}%',
-                                              style: TextStyle(
-                                                fontSize: 8,
-                                                color: currentDayHasPrice ? sunPriceColor : Colors.yellow,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  // SizedBox(width: 10),
-                                  Container(color: Colors.white,width: 1,),// Adds some space between the rows
-                                  Expanded(
-                                    child: Container(
-                                      color: DateTime.now().hour < 12
-                                          ? Colors.grey.withOpacity(0.3)
-                                          : Colors.transparent,
-                                      child: Center(
-                                        child: Column(
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          children: [
-                                            Row(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                Icon(
-                                                  Icons.nightlight_round,
-                                                  color: currentDayHasPrice ? moonPriceColor : Colors.yellow,
-                                                ),
-                                                Text(
-                                                  ' RM$moonPriceStr',
-                                                  style: TextStyle(
-                                                      color: currentDayHasPrice ? moonPriceColor : Colors.yellow,
-                                                      fontSize: 10
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                            SizedBox(height: 4),
-                                            Text(
-                                              '${moonPercentageChange.toStringAsFixed(2)}%',
-                                              style: TextStyle(
-                                                fontSize: 8,
-                                                color: currentDayHasPrice ? moonPriceColor : Colors.yellow,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
+                          } else {
+                            return Container(
+                              color: Color(0xFF82957F), // Set background color while loading
+                              margin: EdgeInsets.only(bottom: 10), // Adds space after each card
+                              child: ListTile(
+                                leading: CircularProgressIndicator(),
+                                title: Text(productName, style: TextStyle(color: Colors.white)),
                               ),
-                            ),
-                            // onTap: () {
-                            //   _firestore.collection('products').where('name', isEqualTo: productName).get().then((value) {
-                            //     final productId = value.docs.first.id;
-                            //     _updatePrice(productName, productId);
-                            //   });
-                            // },
-                          );
-                        } else if (snapshot.hasError) {
-                          return ListTile(
-                            leading: Icon(Icons.error),
-                            title: Text('Error fetching prices'),
-                          );
-                        } else {
-                          return ListTile(
-                            leading: CircularProgressIndicator(),
-                            title: Text(productName,style: TextStyle(color: Colors.white),),
-                          );
-                        }
-                      },
-                    );
-                  },
-                  separatorBuilder: (context, index) {
-                    return Divider();
-                  },
-                ),
+                            );
+                          }
+                        },
+                      );
+                    },
+                  ),
+                )
               ),
             ),
           )
