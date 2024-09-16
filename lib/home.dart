@@ -474,6 +474,11 @@ class _HomePageState extends State<HomePage> {
                               color: Color(0xFF82957F),
                               margin: EdgeInsets.only(bottom: 10), // Adds space after each card
                               child: ListTile(
+                                leading: Image.asset(
+                                  'assets/$productName.png',
+                                  height: 40,
+                                  width: 40,
+                                ),
                                 title: Text(
                                   productName,
                                   style: TextStyle(color: Colors.white),

@@ -32,7 +32,44 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/
+    - assets/ANAK KAILAN.png
+    - assets/BETROOT.png
+    - assets/CAPSICUM GREEN.png
+    - assets/CAPSICUM RED.png
+    - assets/CAPSICUM YELLOW.png
+    - assets/CHERRY TOMATO.png
+    - assets/CHINESE CABBAGE.png
+    - assets/CILI HIJAU.png
+    - assets/CILI MERAH.png
+    - assets/DAUN BAWANG.png
+    - assets/DAUN INSAI.png
+    - assets/DAUN PUDINA.png
+    - assets/DAUN SUP.png
+    - assets/GREEN CORAL.png
+    - assets/JAGUNG MUTIARA (WHITE CORN).png
+    - assets/KACANG BUNCIS (FRENCH BEANS).png
+    - assets/KAICHOY.png
+    - assets/KAILAN CAMERON.png
+    - assets/KUCAI.png
+    - assets/LABU CAMERON.png
+    - assets/LOBAK PUTIH.png
+    - assets/ROMAINE.png
+    - assets/ROUND CABBAGE CAMERON.png
+    - assets/SALAD KING.png
+    - assets/SALAT BULAT (ICEBERG).png
+    - assets/SAWI BUNGA.png
+    - assets/SAWI JEPUN.png
+    - assets/SAWI PANJANG.png
+    - assets/SAWI PUTIH.png
+    - assets/TERUNG MUTIARA (BRINJAL).png
+    - assets/TERUNG PANJANG (BRINJAL LONG).png
+    - assets/TIMUN JEPUN (JAPANESE CUCUMBER).png
+    - assets/TOMATO (L).png
+    - assets/TOMATO (M).png
+    - assets/TOMATO (XL).png
+    - assets/YAUMAK TAM.png
+    - assets/ZUCHINI GREEN.png
+    - assets/ZUCHINI YELLOW.png
     - assets/gif/live.gif
     - assets/spinner.json
     - assets/leaves.jpg
