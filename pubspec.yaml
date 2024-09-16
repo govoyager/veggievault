@@ -15,6 +15,11 @@ dependencies:
   hive_flutter:
   cupertino_icons: ^1.0.6
   fl_chart:
+  firebase_auth:
+  firebase_messaging:
+  lottie:
+  flutter_overlay_loader:
+  flutter_secure_storage:
 
 dev_dependencies:
   flutter_test:
@@ -124,4 +129,4 @@ flutter:
     - assets/Labu air.png
     - assets/Labu Cameron.png
     - assets/gif/live.gif
-
+    - assets/spinner.json
