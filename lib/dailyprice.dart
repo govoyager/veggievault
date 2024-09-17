@@ -1,6 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
+import 'package:intl/intl.dart';
+
+import 'firebase/firebase_auth.dart';
+import 'main.dart';
 
 final today = DateTime.now();
 final formattedDate = '${today.year}${today.month.toString().padLeft(2, '0')}${today.day.toString().padLeft(2, '0')}'; // Format yyyymmdd
@@ -222,22 +226,31 @@ class _dailyPriceState extends State<dailyPrice> {
   }
 
 
+  final _authService = AuthenticationService();
 
   @override
   Widget build(BuildContext context) {
 
-    final List filteredProducts = productsBox.values.where((product) {
+    final filteredProducts = productsBox.values.where((product) {
       return product['name']
           .toString()
           .toLowerCase()
           .contains(_searchQuery);
     }).toList();
 
+    bool isAscending = true;
+
+    void sortProducts() {
+      setState(() {
+        isAscending = !isAscending; // Toggle the sort order
+      });
+    }
+
     filteredProducts.sort((a, b) {
       final nameA = a['name'].toLowerCase();
       final nameB = b['name'].toLowerCase();
 
-      if (_isAscending) {
+      if (isAscending) {
         return nameA.compareTo(nameB); // Ascending
       } else {
         return nameB.compareTo(nameA); // Descending
@@ -250,30 +263,62 @@ class _dailyPriceState extends State<dailyPrice> {
     },
         child:Scaffold(
       appBar: AppBar(
-        title: Text(
-          'Daily Price',
-          style: TextStyle(
-            color: Colors.white,
-          ),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Vegetable Price',
+              style: TextStyle(
+                color: Colors.white,
+              ),
+            ),
+            SizedBox(height: 8), // Add space between the title and date/time
+            Text(
+              DateFormat('dd-MM-yyyy: HH:mm:ss').format(DateTime.now()), // Custom date format
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.7), // Slightly faded white color for distinction
+                fontSize: 14, // Smaller font size for date and time
+              ),
+            ),
+          ],
         ),
         actions: [
           IconButton(
             icon: Icon(Icons.add,color: Colors.white,),
             onPressed: _addProduct,
           ),
+          InkWell(
+            onTap: () async {
+              await _authService.logout();
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(
+                  builder: (context) => SplashScreen(),
+                ),
+                ModalRoute.withName('/'),
+              );
+            },
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: const Color(0xffACC6AC)),
+                color: const Color(0xffffffff),
+              ),
+              child: const Icon(
+                Icons.logout,
+                color: Colors.black,
+              ),
+            ),
+          ),
         ],
-        backgroundColor: Colors.black,
-        centerTitle: true,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back,color: Colors.white,),
-          onPressed: (){
-            Navigator.of(context).pop();
-          },
-        ),
+        backgroundColor: Color(0xff4F694C),
+        automaticallyImplyLeading: false,
       ),
-      backgroundColor: Colors.black,
-      body: Column(
-        children: [
+          backgroundColor: Color(0xff4F694C),
+
+          body: Column(
+            children: [
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: TextField(
@@ -281,9 +326,11 @@ class _dailyPriceState extends State<dailyPrice> {
               style: TextStyle(color: Colors.white),
               decoration: InputDecoration(
                 hintText: 'Search products...',
+                hintStyle: TextStyle(color: Colors.white),
                 prefixIcon: Icon(Icons.search,color: Colors.white,),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8.0),
+
                 ),
               ),
               onChanged: (value) {
@@ -296,30 +343,38 @@ class _dailyPriceState extends State<dailyPrice> {
           Row(
             children: [
               SizedBox(width: 15,),
-
+              TextButton(
+                onPressed: sortProducts,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
                     Text(
                       'Product',
                       style: TextStyle(color: Colors.white),
                     ),
-
+                    Icon(
+                      isAscending ? Icons.arrow_upward : Icons.arrow_downward,
+                      color: Colors.white,
+                    ),
+                  ],
+                ),
+              ),
               Spacer(flex: 1,),
               Container(
-                padding: EdgeInsets.all(1.0),
-                child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Image.asset('assets/gif/live.gif',
-                        height: 30,width: 30,
-                      ),
-                      Text('Live',style: TextStyle(color: Colors.red),),
-                    ]
-                )
+                  padding: EdgeInsets.all(1.0),
+                  child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Image.asset('assets/gif/live.gif',
+                          height: 30,width: 30,
+                        ),
+                        Text('Live',style: TextStyle(color: Colors.red),),
+                      ]
+                  )
               ),
               SizedBox(width: 10,),
             ],
           ),
-          SizedBox(height: 5,),
-          Container(height: 1,color: Colors.black,),
           SizedBox(height: 5,),
           Expanded(
             child: RefreshIndicator(
@@ -448,8 +503,8 @@ class _dailyPriceState extends State<dailyPrice> {
                                                 Text(
                                                   ' RM$sunPriceStr',
                                                   style: TextStyle(
-                                                    color: currentDayHasPrice ? sunPriceColor : Colors.yellow,
-                                                    fontSize: 10
+                                                      color: currentDayHasPrice ? sunPriceColor : Colors.yellow,
+                                                      fontSize: 10
                                                   ),
                                                 ),
                                               ],
@@ -467,8 +522,7 @@ class _dailyPriceState extends State<dailyPrice> {
                                       ),
                                     ),
                                   ),
-                                  // SizedBox(width: 10),
-                                  Container(color: Colors.white,width: 1,),// Adds some space between the rows
+                                  Container(color: Colors.white, width: 1,), // Adds some space between the rows
                                   Expanded(
                                     child: Container(
                                       color: DateTime.now().hour < 12
@@ -488,8 +542,8 @@ class _dailyPriceState extends State<dailyPrice> {
                                                 Text(
                                                   ' RM$moonPriceStr',
                                                   style: TextStyle(
-                                                    color: currentDayHasPrice ? moonPriceColor : Colors.yellow,
-                                                    fontSize: 10
+                                                      color: currentDayHasPrice ? moonPriceColor : Colors.yellow,
+                                                      fontSize: 10
                                                   ),
                                                 ),
                                               ],
@@ -543,7 +597,7 @@ class _dailyPriceState extends State<dailyPrice> {
             ),
           )
         ],
-      ),
+          ),
     ));
   }
 }
